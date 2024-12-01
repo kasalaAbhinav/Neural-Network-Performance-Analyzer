@@ -1,0 +1,127 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neural Network Comparison</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .results-container {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h2 class="mb-4">Neural Network Implementation Comparison</h2>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Configuration</h5>
+                        <form id="trainForm">
+                            <div class="mb-3">
+                                <label for="n_samples" class="form-label">Number of Samples</label>
+                                <input type="number" class="form-control" id="n_samples" value="1000">
+                            </div>
+                            <div class="mb-3">
+                                <label for="input_size" class="form-label">Input Size</label>
+                                <input type="number" class="form-control" id="input_size" value="10">
+                            </div>
+                            <div class="mb-3">
+                                <label for="hidden_size" class="form-label">Hidden Layer Size</label>
+                                <input type="number" class="form-control" id="hidden_size" value="5">
+                            </div>
+                            <div class="mb-3">
+                                <label for="output_size" class="form-label">Output Size</label>
+                                <input type="number" class="form-control" id="output_size" value="1">
+                            </div>
+                            <div class="mb-3">
+                                <label for="epochs" class="form-label">Number of Epochs</label>
+                                <input type="number" class="form-control" id="epochs" value="100">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Train Networks</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card results-container" id="resultsCard">
+                    <div class="card-body">
+                        <h5 class="card-title">Results</h5>
+                        <div class="mb-3">
+                            <h6>Training Time</h6>
+                            <p>Manual Implementation: <span id="manualTime"></span> seconds</p>
+                            <p>PyTorch Implementation: <span id="torchTime"></span> seconds</p>
+                        </div>
+                        <div class="mb-3">
+                            <h6>Final Loss</h6>
+                            <p>Manual Implementation: <span id="manualLoss"></span></p>
+                            <p>PyTorch Implementation: <span id="torchLoss"></span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card results-container" id="plotCard">
+                    <div class="card-body">
+                        <h5 class="card-title">Visualization</h5>
+                        <img id="plot" class="img-fluid" alt="Training Results Plot">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('trainForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const data = {
+                n_samples: document.getElementById('n_samples').value,
+                input_size: document.getElementById('input_size').value,
+                hidden_size: document.getElementById('hidden_size').value,
+                output_size: document.getElementById('output_size').value,
+                epochs: document.getElementById('epochs').value
+            };
+            
+            try {
+                const response = await fetch('/train', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const results = await response.json();
+                
+                // Update results
+                document.getElementById('manualTime').textContent = results.manual_time.toFixed(4);
+                document.getElementById('torchTime').textContent = results.torch_time.toFixed(4);
+                document.getElementById('manualLoss').textContent = results.manual_final_loss.toFixed(4);
+                document.getElementById('torchLoss').textContent = results.torch_final_loss.toFixed(4);
+                
+                // Update plot
+                document.getElementById('plot').src = `data:image/png;base64,${results.plot}`;
+                
+                // Show results
+                document.querySelectorAll('.results-container').forEach(el => {
+                    el.style.display = 'block';
+                });
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred during training');
+            }
+        });
+    </script>
+</body>
+</html>
